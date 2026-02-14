@@ -3,14 +3,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-ODDS_API_KEY = os.getenv("ODDS_API_KEY")
-ODDS_API_BASE_URL = "https://api.the-odds-api.com/v4"
+odds_api_key = os.getenv("ODDS_API_KEY")
+odds_api_base_url = "https://api.the-odds-api.com/v4"
 
-SPORT_KEY = "americanfootball_nfl"
+sport_key = "americanfootball_nfl"
 
-MARKETS = ["spreads", "totals"]
+markets = ["spreads", "totals"]
 
-# US sportsbooks
-REGIONS = "us"
+#US listed sportsbooks
+regions = "us"
 
-ODDS_FORMAT = "american"
+odds_format = "american"
