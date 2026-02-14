@@ -12,8 +12,7 @@ season_start = datetime(2025, 9, 4)
 season_end = datetime(2026, 2, 9)
 
 # 8am, 12pm, 4pm, 8pm CT = 14:00, 18:00, 22:00, 02:00 UTC
-snapshot_hours_utc = [14, 18, 22]
-snapshot_8pm_ct = 2  # 2:00 UTC next day
+snapshot_hours_utc = [2, 14, 18, 22]
 
 # Historical odds endpoint documentation can be found here: https://the-odds-api.com/liveapi/guides/v4/#get-historical-odds
 def get_historical_odds(date_iso):
@@ -37,13 +36,9 @@ def generate_historical_snapshot_timestamps(start, end):
     current_date = start
 
     while current_date <= end:
-        for hour_utc in snapshot_hours_utc:
-            ts = current_date.replace(hour=hour_utc, minute=0, second=0)
+        for hour in snapshot_hours_utc:
+            ts = current_date.replace(hour=hour, minute=0, second=0)
             timestamps.append(ts.strftime("%Y-%m-%dT%H:%M:%SZ"))
-
-        next_day = current_date + timedelta(days=1)
-        ts = next_day.replace(hour=snapshot_8pm_ct, minute=0, second=0)
-        timestamps.append(ts.strftime("%Y-%m-%dT%H:%M:%SZ"))
 
         current_date += timedelta(days=1)
 
@@ -64,17 +59,35 @@ def odds_extract():
     all_timestamps = generate_historical_snapshot_timestamps(season_start, season_end)
     print(f"Total snapshots to extract: {len(all_timestamps)}")
 
-    for i, timestamp in enumerate(all_timestamps):
-        print(f"\n[{i+1}/{len(all_timestamps)}] Fetching {timestamp}...")
+    skipped = 0
+    extracted = 0
+    failed = 0
 
-        data = get_historical_odds(timestamp)
+    for i, timestamp in enumerate(all_timestamps):
+        clean_ts = timestamp.replace(":", "-").replace("T", "_").replace("Z", "")
+        filepath = os.path.join(raw_data_dir, f"nfl_odds_{clean_ts}.json")
+
+        if os.path.exists(filepath):
+            skipped += 1
+            continue
+
+        print(f"[{i+1}/{len(all_timestamps)}] Fetching {timestamp}...")
+
+        try:
+            data = get_historical_odds(timestamp)
+        except requests.RequestException as e:
+            print(f"Failed: {e}. Skipping.")
+            failed += 1
+            continue
+
         num_events = len(data.get("data", []))
-        print(f"Got {num_events} events")
+        print(f"  Got {num_events} events")
 
         save_snapshot(data, timestamp)
+        extracted += 1
         time.sleep(1)
 
-    print(f"Extraction complete: {len(all_timestamps)} total snapshots saved.")
+    print(f"Extracted: {extracted}, Skipped: {skipped}, Failed: {failed}")
 
 if __name__ == "__main__":
     odds_extract()
