@@ -12,7 +12,7 @@ season_start = datetime(2025, 9, 4)
 season_end = datetime(2026, 2, 9)
 
 # 8am, 12pm, 4pm, 8pm CT = 14:00, 18:00, 22:00, 02:00 UTC
-snapshot_hours_utc = [2, 14, 18, 22]
+capture_hours_utc = [2, 14, 18, 22]
 
 # Historical odds endpoint documentation can be found here: https://the-odds-api.com/liveapi/guides/v4/#get-historical-odds
 def get_historical_odds(date_iso):
@@ -31,12 +31,12 @@ def get_historical_odds(date_iso):
 
     return response.json()
 
-def generate_historical_snapshot_timestamps(start, end):
+def generate_capture_timestamps(start, end):
     timestamps = []
     current_date = start
 
     while current_date <= end:
-        for hour in snapshot_hours_utc:
+        for hour in capture_hours_utc:
             ts = current_date.replace(hour=hour, minute=0, second=0)
             timestamps.append(ts.strftime("%Y-%m-%dT%H:%M:%SZ"))
 
@@ -44,7 +44,7 @@ def generate_historical_snapshot_timestamps(start, end):
 
     return timestamps
 
-def save_snapshot(data, timestamp_str):
+def save_odds(data, timestamp_str):
     os.makedirs(raw_data_dir, exist_ok=True)
     clean_ts = timestamp_str.replace(":", "-").replace("T", "_").replace("Z", "")
     filename = f"nfl_odds_{clean_ts}.json"
@@ -56,8 +56,8 @@ def save_snapshot(data, timestamp_str):
     return filepath
 
 def odds_extract():
-    all_timestamps = generate_historical_snapshot_timestamps(season_start, season_end)
-    print(f"Total snapshots to extract: {len(all_timestamps)}")
+    all_timestamps = generate_capture_timestamps(season_start, season_end)
+    print(f"Total timestamps to extract: {len(all_timestamps)}")
 
     skipped = 0
     extracted = 0
@@ -83,7 +83,7 @@ def odds_extract():
         num_events = len(data.get("data", []))
         print(f"  Got {num_events} events")
 
-        save_snapshot(data, timestamp)
+        save_odds(data, timestamp)
         extracted += 1
         time.sleep(1)
 
