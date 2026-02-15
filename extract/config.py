@@ -14,3 +14,5 @@ markets = ["spreads", "totals"]
 regions = "us"
 
 odds_format = "american"
+
+duckdb_path = os.path.join(os.path.dirname(__file__), "..", "data", "nfl_odds.duckdb")
