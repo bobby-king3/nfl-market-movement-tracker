@@ -37,7 +37,7 @@ select
     closing_price,
     {{ implied_probability('opening_price') }} as opening_implied_prob_pct,
     {{ implied_probability('closing_price') }} as closing_implied_prob_pct,
-    {{ implied_probability('closing_price') }} - {{ implied_probability('opening_price') }} as implied_prob_pct_change,
+    round({{ implied_probability('closing_price') }} - {{ implied_probability('opening_price') }}, 4) as implied_prob_pct_change,
     count(*) as capture_count,
     min(captured_at) as first_captured_at,
     max(captured_at) as last_captured_at
