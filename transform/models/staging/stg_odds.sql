@@ -6,6 +6,10 @@ with raw_odds as (
 select
     captured_at,
     commence_time as game_start_time,
+    least(
+        floor((commence_time::date - date '2025-09-03') / 7) + 1,
+        22
+    )::int as nfl_week,
     event_id,
     home_team,
     away_team,

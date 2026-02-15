@@ -15,6 +15,7 @@ with odds as (
 select
     captured_at,
     game_start_time,
+    nfl_week,
     event_id,
     home_team,
     away_team,
