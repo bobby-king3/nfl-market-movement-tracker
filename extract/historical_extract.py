@@ -3,7 +3,7 @@ import os
 import time
 from datetime import datetime, timedelta
 import requests
-from extract.config import odds_api_key, odds_api_base_url, sport_key, markets, regions, odds_format
+from config import odds_api_key, odds_api_base_url, sport_key, markets, regions, odds_format
 
 raw_data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
 
