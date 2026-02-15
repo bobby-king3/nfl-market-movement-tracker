@@ -13,5 +13,11 @@ __pycache__/
 data/raw/*.json
 data/raw/*.csv
 
+# dbt
+logs/
+transform/target/
+transform/dbt_packages/
+transform/logs/
+
 # OS
 .DS_Store
