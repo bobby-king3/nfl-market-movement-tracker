@@ -10,8 +10,7 @@ sport_key = "americanfootball_nfl"
 
 markets = ["spreads", "totals"]
 
-#US listed sportsbooks
-regions = "us"
+regions = ["us", "us2", "eu"]
 
 odds_format = "american"
 

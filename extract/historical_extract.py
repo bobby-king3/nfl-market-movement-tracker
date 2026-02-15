@@ -7,7 +7,7 @@ from config import odds_api_key, odds_api_base_url, sport_key, markets, regions,
 
 raw_data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
 
-#2025 NFL Season
+#2025-2026 NFL Season
 season_start = datetime(2025, 9, 4)
 season_end = datetime(2026, 2, 9)
 
@@ -19,7 +19,7 @@ def get_historical_odds(date_iso):
     url = f"{odds_api_base_url}/historical/sports/{sport_key}/odds"
     params = {
         "apiKey": odds_api_key,
-        "regions": regions,
+        "regions": ",".join(regions),
         "markets": ",".join(markets),
         "oddsFormat": odds_format,
         "dateFormat": "iso",
