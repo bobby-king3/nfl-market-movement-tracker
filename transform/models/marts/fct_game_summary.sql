@@ -35,9 +35,9 @@ select
     closing_line - opening_line as total_line_movement,
     opening_price,
     closing_price,
-    {{ implied_probability('opening_price') }} as opening_implied_prob,
-    {{ implied_probability('closing_price') }} as closing_implied_prob,
-    {{ implied_probability('closing_price') }} - {{ implied_probability('opening_price') }} as implied_prob_change,
+    {{ implied_probability('opening_price') }} as opening_implied_prob_pct,
+    {{ implied_probability('closing_price') }} as closing_implied_prob_pct,
+    {{ implied_probability('closing_price') }} - {{ implied_probability('opening_price') }} as implied_prob_pct_change,
     count(*) as capture_count,
     min(captured_at) as first_captured_at,
     max(captured_at) as last_captured_at
