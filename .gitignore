@@ -9,6 +9,7 @@ __pycache__/
 .idea/
 
 # Data
+*.duckdb
 data/raw/*.json
 data/raw/*.csv
 
