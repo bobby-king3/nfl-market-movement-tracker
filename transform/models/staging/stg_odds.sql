@@ -16,3 +16,4 @@ select
     outcome_price as price,
     outcome_point as line
 from raw_odds
+where captured_at < commence_time
