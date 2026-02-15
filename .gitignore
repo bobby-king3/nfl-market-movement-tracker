@@ -8,5 +8,10 @@ __pycache__/
 .vscode/
 .idea/
 
+# Data
+*.duckdb
+data/raw/*.json
+data/raw/*.csv
+
 # OS
 .DS_Store
