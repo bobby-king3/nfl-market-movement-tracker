@@ -2,9 +2,9 @@ import json
 import os
 import glob
 import duckdb
-from extract.config import duckdb_path
 
 raw_data = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
+duckdb_path = os.path.join(os.path.dirname(__file__), "..", "data", "nfl_odds.duckdb")
 
 def flatten_odds_file(filepath):
     with open(filepath) as f:
