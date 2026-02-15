@@ -1,0 +1,16 @@
+models:
+  - name: stg_odds
+    columns:
+      - name: event_id
+        tests:
+          - not_null
+      - name: sportsbook
+        tests:
+          - not_null
+      - name: market_type
+        tests:
+          - accepted_values:
+              values: ['spreads', 'totals']
+      - name: captured_at
+        tests:
+          - not_null
