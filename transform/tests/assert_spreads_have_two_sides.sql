@@ -1,3 +1,4 @@
+-- Every spread should have exactly two outcomes (home and away team)
 select event_id, captured_at, sportsbook
 from {{ ref('stg_odds') }}
 where market_type = 'spreads'

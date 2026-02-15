@@ -1,3 +1,4 @@
+-- Spread lines should be inverse: if one team is +3, the other should be -3
 select a.event_id, a.captured_at, a.sportsbook, a.line, b.line
 from {{ ref('stg_odds') }} a
 join {{ ref('stg_odds') }} b
