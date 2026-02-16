@@ -1,5 +1,6 @@
 models:
   - name: stg_odds
+    description: "Cleaned and renamed odds data from raw API snapshots. Only pre-match wagers are ingested."
     columns:
       - name: event_id
         tests:
