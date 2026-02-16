@@ -204,21 +204,25 @@ if "other_price" in filtered.columns:
     hover_data["other_price"] = True
 
 with chart_cell:
+    chart_data = filtered.copy()
+    chart_data["operator"] = chart_data["sportsbook"].map(OPERATOR_DISPLAY)
+    display_color_map = {OPERATOR_DISPLAY[k]: v for k, v in OPERATOR_COLORS.items() if k in OPERATOR_COLORS}
+
     fig_line = px.line(
-        filtered,
+        chart_data,
         x="captured_at",
         y="line",
-        color="sportsbook",
+        color="operator",
         labels={
             "captured_at": "Date",
             "line": "Line",
-            "sportsbook": "Operator",
+            "operator": "Operator",
             "price": f"{selected_outcome} Price",
             "other_price": f"{other_outcome[0]} Price" if other_outcome else "Price",
         },
         line_shape="hv",
         hover_data=hover_data,
-        color_discrete_map=OPERATOR_COLORS,
+        color_discrete_map=display_color_map,
     )
     line_min = filtered["line"].min() - 1
     line_max = filtered["line"].max() + 1
@@ -537,5 +541,15 @@ if not filtered.empty:
 """
 
 summary_display = summary[["sportsbook", "outcome", "opening_line", "closing_line",
-                            "total_line_movement", "opening_price", "closing_price"]]
+                            "total_line_movement", "opening_price", "closing_price"]].copy()
+summary_display["sportsbook"] = summary_display["sportsbook"].map(OPERATOR_DISPLAY)
+summary_display = summary_display.rename(columns={
+    "sportsbook": "Operator",
+    "outcome": "Outcome",
+    "opening_line": "Opening Line",
+    "closing_line": "Closing Line",
+    "total_line_movement": "Line Movement",
+    "opening_price": "Opening Price",
+    "closing_price": "Closing Price",
+})
 st.dataframe(summary_display, use_container_width=True, hide_index=True)
