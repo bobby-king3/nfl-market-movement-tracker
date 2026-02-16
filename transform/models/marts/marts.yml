@@ -1,6 +1,14 @@
 models:
   - name: fct_line_movements
     description: "Snapshot level odds data. Each row represents one odds observation for a game/sportsbook/market/outcome, with the change from the previous snapshot."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - event_id
+            - sportsbook
+            - market_type
+            - outcome
+            - captured_at
     columns:
       - name: nfl_week
         description: "NFL week number. 1-18 for regular season, 19 Wild Card, 20 Divisional, 21 Conference Championships, 22 Super Bowl."
@@ -19,6 +27,13 @@ models:
 
   - name: fct_game_summary
     description: "Game level summary with one row per game/sportsbook/market/outcome. Compares opening and closing lines, prices, and implied probabilities."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - event_id
+            - sportsbook
+            - market_type
+            - outcome
     columns:
       - name: nfl_week
         description: "NFL week number. 1-18 for regular season, 19-22 for postseason."
