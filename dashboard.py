@@ -250,10 +250,10 @@ if not outcome_summary.empty:
         m1, m2 = st.columns(2)
         m1.metric("Line", metric_row["closing_line"],
                   delta=f"{line_movement:+.1f}" if line_movement != 0 else None,
-                  delta_color="off")
+                  delta_color="normal")
         m2.metric("Price", int(metric_row["closing_price"]),
                   delta=f"{price_change:+d}" if price_change != 0 else None,
-                  delta_color="off")
+                  delta_color="normal")
         st.caption("Pinnacle closing odds")
 
 if not summary.empty:
@@ -323,7 +323,7 @@ if not summary.empty:
             barmode="stack",
             height=45 * len(books) + 80,
             margin=dict(l=10, r=80, t=10, b=40),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5, traceorder="normal"),
             xaxis_title="Implied Probability %",
             yaxis_title="",
             xaxis=dict(range=[0, max_total + 12]),
