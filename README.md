@@ -1,6 +1,6 @@
 # NFL Market Movement Tracker
 
-Tracks how NFL market lines move across operators leading up to kickoff throughout the 2025-2026 season. Built as an ELT pipeline using Python, DuckDB, and dbt, with a Streamlit dashboard for visualization.
+This project tracks how NFL market lines move across operators leading up to kickoff throughout the 2025-2026 season. Built as an ELT pipeline using Python, DuckDB, and dbt, with a Streamlit dashboard for visualization.
 
 ## Background
 
@@ -33,7 +33,9 @@ I pulled historical odds from [The Odds API](https://the-odds-api.com/) 4 times 
 
 ## Dashboard
 
-<!-- TODO: Add deployed Streamlit link here -->
+[Live Dashboard](https://nfl-market-movement-tracker-a2fnqqz4jfhdlbzxhzvx9q.streamlit.app/)
+
+Select any NFL week and game or by team schedule to analyze spreads and totals.
 
 ## Instructions to Run Locally
 
