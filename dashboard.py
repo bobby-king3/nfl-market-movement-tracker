@@ -25,19 +25,18 @@ Track how market lines move across operators leading up to kickoff.
 
 DB_PATH = "data/nfl_odds.duckdb"
 
-FEATURED_OPERATORS = [
-    "pinnacle", "draftkings", "fanduel", "betmgm",
-    "hardrockbet", "betrivers", "fanatics"
-]
-
 OPERATOR_DISPLAY = {
-    "pinnacle": "Pinnacle",
-    "draftkings": "DraftKings",
-    "fanduel": "FanDuel",
+    "ballybet": "Bally Bet",
     "betmgm": "BetMGM",
-    "hardrockbet": "Hard Rock Bet",
     "betrivers": "BetRivers",
+    "draftkings": "DraftKings",
+    "espnbet": "ESPN BET/theScore",
     "fanatics": "Fanatics",
+    "fanduel": "FanDuel",
+    "fliff": "Fliff",
+    "hardrockbet": "Hard Rock Bet",
+    "pinnacle": "Pinnacle",
+    "williamhill_us": "Caesars",
 }
 
 OPERATOR_COLORS = {
@@ -48,6 +47,10 @@ OPERATOR_COLORS = {
     "hardrockbet": "#7D1783",
     "betrivers": "#FFD700",
     "fanatics": "#A1B8E9",
+    "espnbet": "#FF3E3E",
+    "williamhill_us": "#1B3C6B",
+    "ballybet": "#E63946",
+    "fliff": "#FF69B4",
 }
 
 DEFAULT_OPERATORS = ["pinnacle", "draftkings", "fanduel"]
@@ -158,7 +161,7 @@ with filter_cell:
 
     selected_operators = st.multiselect(
         "Operators",
-        options=FEATURED_OPERATORS,
+        options=list(OPERATOR_DISPLAY.keys()),
         default=DEFAULT_OPERATORS,
         format_func=lambda x: OPERATOR_DISPLAY.get(x, x),
     )
