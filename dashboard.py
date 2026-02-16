@@ -1,3 +1,5 @@
+import os
+import urllib.request
 import streamlit as st
 import duckdb
 import pandas as pd
@@ -8,6 +10,13 @@ import plotly.graph_objects as go
 # Github: https://github.com/streamlit/demo-stockpeers/blob/main/streamlit_app.py
 # Streamlit: https://demo-stockpeers.streamlit.app/?ref=streamlit-io-gallery-favorites&stocks=AAPL%2CMSFT%2CGOOGL%2CNVDA%2CAMZN%2CTSLA%2CMETA
 
+DB_PATH = "data/nfl_odds.duckdb"
+DB_URL = "https://github.com/bobby-king3/nfl-market-movement-tracker/releases/download/v1.0.0/nfl_odds.duckdb"
+
+if not os.path.exists(DB_PATH):
+    os.makedirs("data", exist_ok=True)
+    with st.spinner("Downloading database..."):
+        urllib.request.urlretrieve(DB_URL, DB_PATH)
 
 st.set_page_config(
     page_title="NFL Market Movement Tracker",
@@ -22,8 +31,6 @@ Track how market lines move across operators leading up to kickoff.
 """
 
 ""  # Add some space.
-
-DB_PATH = "data/nfl_odds.duckdb"
 
 OPERATOR_DISPLAY = {
     "ballybet": "Bally Bet",
@@ -373,7 +380,7 @@ if not outcome_summary.empty:
             x=moved["opening_line"],
             y=moved["display_name"],
             mode="markers",
-            name="Opening",
+            showlegend=False,
             marker=dict(size=12, color="white", line=dict(width=2, color="#666")),
             hovertemplate="%{y}<br>Opening: %{x}<extra></extra>",
         ))
@@ -384,7 +391,7 @@ if not outcome_summary.empty:
             x=moved["closing_line"],
             y=moved["display_name"],
             mode="markers",
-            name="Closing",
+            showlegend=False,
             marker=dict(
                 size=12,
                 color=[OPERATOR_COLORS.get(s, "#888") for s in moved["sportsbook"]],
@@ -399,7 +406,7 @@ if not outcome_summary.empty:
             x=no_move["closing_line"],
             y=no_move["display_name"],
             mode="markers",
-            name="No Change",
+            showlegend=False,
             marker=dict(
                 size=12,
                 color=[OPERATOR_COLORS.get(s, "#888") for s in no_move["sportsbook"]],
@@ -431,10 +438,11 @@ if not outcome_summary.empty:
         xaxis_title="Line",
         yaxis_title="",
         xaxis=dict(range=[line_min_db, line_max_db], dtick=0.5),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="center", x=0.5),
+        showlegend=False,
     )
 
     st.plotly_chart(fig_db, use_container_width=True)
+    st.caption("White circle = opening line, colored circle = closing line, diamond = no movement.")
 
 ""
 ""
