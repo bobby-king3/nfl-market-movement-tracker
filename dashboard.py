@@ -4,11 +4,10 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-"""
-Credit to sfc-gh-tteixeira on dashboard template
-Github: https://github.com/streamlit/demo-stockpeers/blob/main/streamlit_app.py
-Streamlit: https://demo-stockpeers.streamlit.app/?ref=streamlit-io-gallery-favorites&stocks=AAPL%2CMSFT%2CGOOGL%2CNVDA%2CAMZN%2CTSLA%2CMETA
-"""
+# Credit to sfc-gh-tteixeira on dashboard template
+# Github: https://github.com/streamlit/demo-stockpeers/blob/main/streamlit_app.py
+# Streamlit: https://demo-stockpeers.streamlit.app/?ref=streamlit-io-gallery-favorites&stocks=AAPL%2CMSFT%2CGOOGL%2CNVDA%2CAMZN%2CTSLA%2CMETA
+
 
 st.set_page_config(
     page_title="NFL Market Movement Tracker",
