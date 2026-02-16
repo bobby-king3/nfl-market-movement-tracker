@@ -27,5 +27,6 @@ select
     line - prev_line as line_change,
     price,
     prev_price,
-    price - prev_price as price_change
+    price - prev_price as price_change,
+    {{ implied_probability('price') }} as implied_prob
 from odds
