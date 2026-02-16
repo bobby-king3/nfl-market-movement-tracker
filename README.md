@@ -33,7 +33,7 @@ I pulled historical odds from [The Odds API](https://the-odds-api.com/) 4 times 
 
 ## Dashboard
 
-Streamlit dashboard: 
+<!-- TODO: Add deployed Streamlit link here -->
 
 ## Instructions to Run Locally
 
@@ -46,12 +46,24 @@ cd nfl-market-movement-tracker
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+```
 
-# Add your dbt profile to ~/.dbt/profiles.yml
-# pointing to data/nfl_odds.duckdb
+> **Note:** dbt requires a profile in `~/.dbt/profiles.yml`. Add the following entry before running `dbt build`:
+> ```yaml
+> transform:
+>   target: dev
+>   outputs:
+>     dev:
+>       type: duckdb
+>       path: /path/to/nfl-market-movement-tracker/data/nfl_odds.duckdb
+> ```
 
+```bash
 cd transform
 dbt build
+
+cd ..
+streamlit run dashboard.py
 ```
 
 ## Running the Full Pipeline
@@ -59,6 +71,7 @@ dbt build
 If you want to run the extract yourself, an [Odds API](https://the-odds-api.com/) account and API key is required.
 
 ```bash
+# From the project root
 echo "ODDS_API_KEY=your_key_here" > .env
 
 cd extract
