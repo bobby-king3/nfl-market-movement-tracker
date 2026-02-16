@@ -1,39 +1,47 @@
-# NFL Line Movement Tracker
+# NFL Market Movement Tracker
 
-Tracks how NFL betting lines move across sportsbooks over the course of the 2025-2026 season. Built as an ELT pipeline using Python, DuckDB, and dbt.
+Tracks how NFL market lines move across operators leading up to kickoff throughout the 2025-2026 season. Built as an ELT pipeline using Python, DuckDB, and dbt, with a Streamlit dashboard for visualization.
 
 ## Background
 
 ```
-The Odds API → Python Extract → JSON Files → Python Load → DuckDB → dbt Transform
+The Odds API → Python Extract → JSON Files → Python Load → DuckDB → dbt Transform → Streamlit Dashboard
 ```
 
-I pulled historical odds from [The Odds API](https://the-odds-api.com/) 4 times per day (8am, 12pm, 4pm, 8pm CT) for each sportsbook throughout the entirety of the 2025-2026 NFL season. The data is then loaded into DuckDB for dbt to model the data.
+I pulled historical odds from [The Odds API](https://the-odds-api.com/) 4 times per day (8am, 12pm, 4pm, 8pm CT) for each operator throughout the entirety of the 2025-2026 NFL season. The data is loaded into DuckDB and transformed with dbt.
 
 ## Dataset
 
-1.17M+ rows covering the full 2025-2026 NFL season, with spreads and totals from 32 sportsbooks across US, US2, and EU regions — including DraftKings, FanDuel, BetMGM, BetRivers, Pinnacle, and others. 636 total snapshots across the season.
+1.17M+ rows covering the full 2025-2026 NFL season, with spreads and totals from 32 operators including DraftKings, FanDuel, BetMGM, BetRivers, Pinnacle, and others. 636 total snapshots across the season.
 
-## dbt models
+## dbt Models
 
 **Staging**
-- `stg_odds` — cleaned up raw odds with renamed columns, selected relevenant fields
+- `stg_odds` — cleaned and renamed raw odds data, filtered to pre-match captures only
 
 **Marts**
-- `fct_line_movements` — compares each capture to the previous offering to show when lines and prices moved
-- `fct_game_summary` — one row per game/sportsbook/market with opening line, closing line, total movement, and implied probability conversion
+- `fct_line_movements` — snapshot level odds with line/price changes from previous capture and implied probability
+- `fct_game_summary` — one row per game/operator/market with opening and closing lines, prices, implied probabilities, and total movement
 
 **Tests**
 - `not_null` and `accepted_values` on staging columns
 - Custom tests validating that every spread has two sides and lines are properly inverse (+3 / -3)
 
-## Instructions to Run Locally:
+## dbt Lineage
 
-Download the DuckDB database from the [Releases page](https://github.com/bobby-king3/sports_betting_tracker/releases) and place it in the `data/` folder. No API key needed to run the dbt models.
+![dbt lineage graph](image.png)
+
+## Dashboard
+
+Streamlit dashboard: 
+
+## Instructions to Run Locally
+
+Download the DuckDB database from the [Releases page](https://github.com/bobby-king3/nfl-market-movement-tracker/releases) and place it in the `data/` folder. No API key is needed to run the dbt models or dashboard.
 
 ```bash
-git clone https://github.com/bobbyking/nfl-line-movement-tracker.git
-cd nfl-line-movement-tracker
+git clone https://github.com/bobby-king3/nfl-market-movement-tracker.git
+cd nfl-market-movement-tracker
 
 python3 -m venv venv
 source venv/bin/activate
@@ -46,9 +54,9 @@ cd transform
 dbt build
 ```
 
-## Running the full pipeline
+## Running the Full Pipeline
 
-If you want to run the extract yourself, an [Odds API](https://the-odds-api.com/) account and API key is required
+If you want to run the extract yourself, an [Odds API](https://the-odds-api.com/) account and API key is required.
 
 ```bash
 echo "ODDS_API_KEY=your_key_here" > .env
@@ -61,8 +69,7 @@ python load_to_duckdb.py
 
 cd ../transform
 dbt build
+
+cd ..
+streamlit run dashboard.py
 ```
-
-## dbt lineage
-
-![dbt lineage graph](image.png)
