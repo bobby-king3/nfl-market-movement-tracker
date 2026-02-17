@@ -88,3 +88,7 @@ dbt build
 cd ..
 streamlit run dashboard.py
 ```
+
+## Disclaimer
+
+This project is for educational and portfolio purposes only. It is not intended to be used for wagering decisions.
