@@ -258,7 +258,7 @@ if not outcome_summary.empty:
     metric_row = pinnacle_row.iloc[0] if not pinnacle_row.empty else outcome_summary.iloc[0]
 
     line_movement = metric_row["total_line_movement"]
-    price_change = int(metric_row["closing_price"]) - int(metric_row["opening_price"])
+    prob_change = metric_row["implied_prob_pct_change"] * 100
 
     with top_cols[0].container(border=True):
         m1, m2 = st.columns(2)
@@ -266,7 +266,7 @@ if not outcome_summary.empty:
                   delta=f"{line_movement:+.1f}" if line_movement != 0 else None,
                   delta_color="normal")
         m2.metric("Price", int(metric_row["closing_price"]),
-                  delta=f"{price_change:+d}" if price_change != 0 else None,
+                  delta=f"{prob_change:+.1f}%" if round(prob_change, 2) != 0 else None,
                   delta_color="normal")
         st.caption("Pinnacle closing odds")
 
