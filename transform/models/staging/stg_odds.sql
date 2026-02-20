@@ -21,3 +21,4 @@ select
     outcome_point as line
 from raw_odds
 where captured_at < commence_time
+and market_key != 'h2h_lay' -- lay betting market from EU exchanges, not including in analysis/dashboard
