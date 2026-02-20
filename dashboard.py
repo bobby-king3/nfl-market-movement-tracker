@@ -142,7 +142,7 @@ with filter_cell:
         available_weeks = sorted(set(g[4] for g in games_with_weeks))
         week_options = [WEEK_LABELS.get(w, f"Week {w}") for w in available_weeks]
 
-        selected_week_label = st.selectbox("Week", week_options)
+        selected_week_label = st.selectbox("Week", week_options, index=len(week_options) - 1)
         selected_week_num = available_weeks[week_options.index(selected_week_label)]
 
         # Filter games to selected week, sorted by game date
