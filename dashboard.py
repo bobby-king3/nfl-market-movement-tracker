@@ -30,7 +30,7 @@ st.set_page_config(
 Track how market lines move across operators leading up to kickoff.
 """
 
-""  # Add some space.
+""
 
 OPERATOR_DISPLAY = {
     "ballybet": "Bally Bet",
@@ -60,7 +60,7 @@ OPERATOR_COLORS = {
     "fliff": "#FF69B4",
 }
 
-DEFAULT_OPERATORS = ["pinnacle", "draftkings", "fanduel"]
+DEFAULT_OPERATORS = ["pinnacle", "draftkings", "fanduel", "hardrockbet", "betrivers"]
 
 
 WEEK_LABELS = {
@@ -173,7 +173,12 @@ with filter_cell:
         format_func=lambda x: OPERATOR_DISPLAY.get(x, x),
     )
 
-    market_type = st.pills("Market", ["spreads", "totals"], default="spreads")
+    market_type = st.pills(
+        "Market",
+        ["h2h", "spreads", "totals"],
+        default="h2h",
+        format_func=lambda x: {"h2h": "Head to Head", "spreads": "Spread", "totals": "Total"}[x],
+    )
 
 if not selected_operators:
     filter_cell.info("Select at least one operator.", icon=":material/info:")
@@ -191,6 +196,9 @@ outcomes = movements["outcome"].unique().tolist()
 if market_type == "spreads":
     home_outcomes = [o for o in outcomes if movements[movements["outcome"] == o]["line"].iloc[0] < 0]
     selected_outcome = home_outcomes[0] if home_outcomes else outcomes[0]
+elif market_type == "h2h":
+    latest_probs = movements.sort_values("captured_at").groupby("outcome")["implied_prob"].last()
+    selected_outcome = latest_probs.idxmax() if not latest_probs.empty else outcomes[0]
 else:
     selected_outcome = "Over" if "Over" in outcomes else outcomes[0]
 
@@ -218,14 +226,21 @@ with chart_cell:
     chart_data["operator"] = chart_data["sportsbook"].map(OPERATOR_DISPLAY)
     display_color_map = {OPERATOR_DISPLAY[k]: v for k, v in OPERATOR_COLORS.items() if k in OPERATOR_COLORS}
 
+    if market_type == "h2h":
+        y_col = "price"
+        y_label = "Head to Head Price"
+    else:
+        y_col = "line"
+        y_label = "Line"
+
     fig_line = px.line(
         chart_data,
         x="captured_at",
-        y="line",
+        y=y_col,
         color="operator",
         labels={
             "captured_at": "Date",
-            "line": "Line",
+            y_col: y_label,
             "operator": "Operator",
             "price": f"{selected_outcome} Price",
             "other_price": f"{other_outcome[0]} Price" if other_outcome else "Price",
@@ -234,9 +249,14 @@ with chart_cell:
         hover_data=hover_data,
         color_discrete_map=display_color_map,
     )
-    line_min = filtered["line"].min() - 1
-    line_max = filtered["line"].max() + 1
-    fig_line.update_yaxes(range=[line_min, line_max], dtick=0.5)
+    if market_type == "h2h":
+        price_min = filtered["price"].min() - 5
+        price_max = filtered["price"].max() + 5
+        fig_line.update_yaxes(range=[price_min, price_max])
+    else:
+        line_min = filtered["line"].min() - 1
+        line_max = filtered["line"].max() + 1
+        fig_line.update_yaxes(range=[line_min, line_max], dtick=0.5)
     fig_line.update_traces(line=dict(width=2.5))
     fig_line.update_layout(
         hovermode="x unified",
@@ -247,6 +267,8 @@ with chart_cell:
 
     if market_type == "spreads":
         chart_label = f"Spread — {selected_outcome}"
+    elif market_type == "h2h":
+        chart_label = f"Head to Head — {selected_outcome}"
     else:
         chart_label = f"Total — {selected_outcome}"
     st.caption(chart_label)
@@ -262,9 +284,14 @@ if not outcome_summary.empty:
 
     with top_cols[0].container(border=True):
         m1, m2 = st.columns(2)
-        m1.metric("Line", metric_row["closing_line"],
-                  delta=f"{line_movement:+.1f}" if line_movement != 0 else None,
-                  delta_color="normal")
+        if market_type == "h2h":
+            m1.metric("Win Probability", f"{metric_row['closing_implied_prob_pct'] * 100:.1f}%",
+                      delta=f"{prob_change:+.1f}%" if round(prob_change, 2) != 0 else None,
+                      delta_color="normal")
+        else:
+            m1.metric("Line", metric_row["closing_line"],
+                      delta=f"{line_movement:+.1f}" if line_movement != 0 else None,
+                      delta_color="normal")
         m2.metric("Price", int(metric_row["closing_price"]),
                   delta=f"{prob_change:+.1f}%" if round(prob_change, 2) != 0 else None,
                   delta_color="normal")
@@ -348,7 +375,7 @@ if not summary.empty:
 ""
 ""
 
-if not outcome_summary.empty:
+if not outcome_summary.empty and market_type != "h2h":
     """
     ## Opening vs Closing Line
     """
@@ -551,16 +578,34 @@ if not filtered.empty:
 ## Game Summary
 """
 
-summary_display = summary[["sportsbook", "outcome", "opening_line", "closing_line",
-                            "total_line_movement", "opening_price", "closing_price"]].copy()
-summary_display["sportsbook"] = summary_display["sportsbook"].map(OPERATOR_DISPLAY)
-summary_display = summary_display.rename(columns={
-    "sportsbook": "Operator",
-    "outcome": "Outcome",
-    "opening_line": "Opening Line",
-    "closing_line": "Closing Line",
-    "total_line_movement": "Line Movement",
-    "opening_price": "Opening Price",
-    "closing_price": "Closing Price",
-})
+if market_type == "h2h":
+    summary_display = summary[["sportsbook", "outcome", "opening_price", "closing_price",
+                                "opening_implied_prob_pct", "closing_implied_prob_pct",
+                                "implied_prob_pct_change"]].copy()
+    summary_display["opening_implied_prob_pct"] = (summary_display["opening_implied_prob_pct"] * 100).round(1)
+    summary_display["closing_implied_prob_pct"] = (summary_display["closing_implied_prob_pct"] * 100).round(1)
+    summary_display["implied_prob_pct_change"] = (summary_display["implied_prob_pct_change"] * 100).round(1)
+    summary_display["sportsbook"] = summary_display["sportsbook"].map(OPERATOR_DISPLAY)
+    summary_display = summary_display.rename(columns={
+        "sportsbook": "Operator",
+        "outcome": "Outcome",
+        "opening_price": "Opening Price",
+        "closing_price": "Closing Price",
+        "opening_implied_prob_pct": "Opening Win %",
+        "closing_implied_prob_pct": "Closing Win %",
+        "implied_prob_pct_change": "Win % Change",
+    })
+else:
+    summary_display = summary[["sportsbook", "outcome", "opening_line", "closing_line",
+                                "total_line_movement", "opening_price", "closing_price"]].copy()
+    summary_display["sportsbook"] = summary_display["sportsbook"].map(OPERATOR_DISPLAY)
+    summary_display = summary_display.rename(columns={
+        "sportsbook": "Operator",
+        "outcome": "Outcome",
+        "opening_line": "Opening Line",
+        "closing_line": "Closing Line",
+        "total_line_movement": "Line Movement",
+        "opening_price": "Opening Price",
+        "closing_price": "Closing Price",
+    })
 st.dataframe(summary_display, use_container_width=True, hide_index=True)
