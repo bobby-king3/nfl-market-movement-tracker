@@ -45,3 +45,37 @@ models:
         description: "Implied probability at market close, derived from closing price"
       - name: implied_prob_pct_change
         description: "Change in implied probability from open to close"
+
+  - name: fct_season_summary
+    description: "Season level summary with one row per game/market/outcome, using Pinnacle as the consensus reference. Used for cross-game analysis."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - event_id
+            - market_type
+            - outcome
+    columns:
+      - name: event_id
+        data_tests:
+          - not_null
+      - name: market_type
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['spreads', 'totals']
+      - name: outcome
+        data_tests:
+          - not_null
+      - name: total_line_movement
+        data_tests:
+          - not_null
+      - name: abs_line_movement
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: days_of_data
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
