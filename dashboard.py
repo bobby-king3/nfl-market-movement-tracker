@@ -267,7 +267,7 @@ with chart_cell:
         margin=dict(l=20, r=20, t=30, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
         xaxis=dict(
-            range=[game_start_time - timedelta(days=14), game_start_time],
+            range=[game_start_time - timedelta(days=7), game_start_time],
             rangeselector=dict(
                 buttons=[
                     dict(count=7, label="1W", step="day", stepmode="backward"),
@@ -583,7 +583,7 @@ if not filtered.empty:
             ticksuffix="%",
         ),
         xaxis=dict(
-            range=[game_start_time - timedelta(days=14), game_start_time],
+            range=[game_start_time - timedelta(days=7), game_start_time],
             rangeselector=dict(
                 buttons=[
                     dict(count=7, label="1W", step="day", stepmode="backward"),
