@@ -12,7 +12,7 @@ import plotly.graph_objects as go
 # Streamlit: https://demo-stockpeers.streamlit.app/?ref=streamlit-io-gallery-favorites&stocks=AAPL%2CMSFT%2CGOOGL%2CNVDA%2CAMZN%2CTSLA%2CMETA
 
 DB_PATH = "data/nfl_odds.duckdb"
-DB_URL = "https://github.com/bobby-king3/nfl-market-movement-tracker/releases/download/v1.0.0/nfl_odds.duckdb"
+DB_URL = "https://github.com/bobby-king3/nfl-market-movement-tracker/releases/download/v1.1.0/nfl_odds.duckdb"
 
 if not os.path.exists(DB_PATH):
     os.makedirs("data", exist_ok=True)
