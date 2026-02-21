@@ -1,5 +1,6 @@
 import os
 import urllib.request
+from datetime import timedelta
 import streamlit as st
 import duckdb
 import pandas as pd
@@ -27,7 +28,6 @@ st.set_page_config(
 """
 # NFL Market Movement Tracker
 
-Track how market lines move across operators leading up to kickoff.
 """
 
 ""
@@ -215,6 +215,9 @@ if other_outcome:
     )
     filtered = filtered.merge(other_filtered, on=["captured_at", "sportsbook"], how="left")
 
+selected_game_info = next(g for g in games_with_weeks if g[0] == selected_event_id)
+game_start_time = selected_game_info[3]
+
 chart_cell = top_cols[1].container(border=True)
 
 hover_data = {"price": True}
@@ -260,9 +263,19 @@ with chart_cell:
     fig_line.update_traces(line=dict(width=2.5))
     fig_line.update_layout(
         hovermode="x unified",
-        height=450,
+        height=615,
         margin=dict(l=20, r=20, t=30, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        xaxis=dict(
+            range=[game_start_time - timedelta(days=14), game_start_time],
+            rangeselector=dict(
+                buttons=[
+                    dict(count=7, label="1W", step="day", stepmode="backward"),
+                    dict(count=14, label="2W", step="day", stepmode="backward"),
+                    dict(step="all", label="All"),
+                ],
+            ),
+        ),
     )
 
     if market_type == "spreads":
@@ -274,28 +287,35 @@ with chart_cell:
     st.caption(chart_label)
     st.plotly_chart(fig_line, use_container_width=True)
 
-# Use Pinnacle as consensus data point
 if not outcome_summary.empty:
-    pinnacle_row = outcome_summary[outcome_summary["sportsbook"] == "pinnacle"]
-    metric_row = pinnacle_row.iloc[0] if not pinnacle_row.empty else outcome_summary.iloc[0]
-
-    line_movement = metric_row["total_line_movement"]
-    prob_change = metric_row["implied_prob_pct_change"] * 100
+    avg_closing_price = outcome_summary["closing_price"].mean()
+    avg_prob_change = outcome_summary["implied_prob_pct_change"].mean() * 100
+    n_books = len(outcome_summary)
 
     with top_cols[0].container(border=True):
-        m1, m2 = st.columns(2)
+        m1, m2, m3 = st.columns(3)
         if market_type == "h2h":
-            m1.metric("Win Probability", f"{metric_row['closing_implied_prob_pct'] * 100:.1f}%",
-                      delta=f"{prob_change:+.1f}%" if round(prob_change, 2) != 0 else None,
+            avg_win_prob = outcome_summary["closing_implied_prob_pct"].mean() * 100
+            m1.metric("Avg Win Prob", f"{avg_win_prob:.1f}%",
+                      delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
                       delta_color="normal")
         else:
-            m1.metric("Line", metric_row["closing_line"],
-                      delta=f"{line_movement:+.1f}" if line_movement != 0 else None,
+            avg_closing_line = outcome_summary["closing_line"].mean()
+            avg_line_movement = outcome_summary["total_line_movement"].mean()
+            m1.metric("Avg Line", f"{avg_closing_line:+.1f}",
+                      delta=f"{avg_line_movement:+.1f}" if round(avg_line_movement, 2) != 0 else None,
                       delta_color="normal")
-        m2.metric("Price", int(metric_row["closing_price"]),
-                  delta=f"{prob_change:+.1f}%" if round(prob_change, 2) != 0 else None,
+        m2.metric("Avg Price", int(round(avg_closing_price)),
+                  delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
                   delta_color="normal")
-        st.caption("Pinnacle closing odds")
+        if market_type == "h2h":
+            vig_by_book = summary.groupby("sportsbook")["closing_implied_prob_pct"].sum()
+            avg_margin = (vig_by_book.mean() - 1.0) * 100
+            m3.metric("Avg Margin", f"{avg_margin:.1f}%")
+        else:
+            books_moved = (outcome_summary["total_line_movement"] != 0).sum()
+            m3.metric("Books Moved", f"{books_moved} of {n_books}")
+        st.caption(f"Avg closing odds across {n_books} selected operator(s)")
 
 if not summary.empty:
     """
@@ -563,13 +583,23 @@ if not filtered.empty:
             range=[prob_min - y_padding, prob_max + y_padding],
             ticksuffix="%",
         ),
+        xaxis=dict(
+            range=[game_start_time - timedelta(days=14), game_start_time],
+            rangeselector=dict(
+                buttons=[
+                    dict(count=7, label="1W", step="day", stepmode="backward"),
+                    dict(count=14, label="2W", step="day", stepmode="backward"),
+                    dict(step="all", label="All"),
+                ],
+            ),
+        ),
         xaxis_title="",
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
 
     st.plotly_chart(fig_prob, use_container_width=True)
-    st.caption(f"Market confidence for {selected_outcome} over time, derived from odds pricing.")
+    st.caption(f"Market confidence for {selected_outcome} over time, calculated based on odds pricing.")
 
 ""
 ""
