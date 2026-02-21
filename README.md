@@ -35,7 +35,7 @@ I pulled historical odds from [The Odds API](https://the-odds-api.com/) 4 times 
 
 [Live Dashboard](https://nfl-market-movement-tracker-a2fnqqz4jfhdlbzxhzvx9q.streamlit.app/)
 
-Select any NFL week and game or by team schedule to analyze spreads and totals.
+Select any NFL week and game or by team schedule to analyze spreads, totals, and head to head details.
 
 ## Instructions to Run Locally
 
