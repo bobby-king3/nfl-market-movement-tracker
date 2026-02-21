@@ -320,17 +320,6 @@ if not summary.empty:
 
         fig.add_trace(go.Bar(
             y=display_names,
-            x=[side_other.loc[b, "closing_pct"] for b in books],
-            name=other_name,
-            orientation="h",
-            marker_color="#5B8FC9",
-            text=[f"{side_other.loc[b, 'closing_pct']:.1f}%" for b in books],
-            textposition="inside",
-            hovertemplate="%{y}: %{x:.1f}%<extra>" + other_name + "</extra>",
-        ))
-
-        fig.add_trace(go.Bar(
-            y=display_names,
             x=[side_selected.loc[b, "closing_pct"] for b in books],
             name=selected_outcome,
             orientation="h",
@@ -338,6 +327,17 @@ if not summary.empty:
             text=[f"{side_selected.loc[b, 'closing_pct']:.1f}%" for b in books],
             textposition="inside",
             hovertemplate="%{y}: %{x:.1f}%<extra>" + selected_outcome + "</extra>",
+        ))
+
+        fig.add_trace(go.Bar(
+            y=display_names,
+            x=[side_other.loc[b, "closing_pct"] for b in books],
+            name=other_name,
+            orientation="h",
+            marker_color="#5B8FC9",
+            text=[f"{side_other.loc[b, 'closing_pct']:.1f}%" for b in books],
+            textposition="inside",
+            hovertemplate="%{y}: %{x:.1f}%<extra>" + other_name + "</extra>",
         ))
 
         # Add margin annotations at end of each bar
