@@ -288,9 +288,10 @@ with chart_cell:
     st.plotly_chart(fig_line, use_container_width=True)
 
 if not outcome_summary.empty:
-    avg_closing_price = outcome_summary["closing_price"].mean()
     avg_prob_change = outcome_summary["implied_prob_pct_change"].mean() * 100
     n_books = len(outcome_summary)
+    vig_by_book = summary.groupby("sportsbook")["closing_implied_prob_pct"].sum()
+    avg_margin = (vig_by_book.mean() - 1.0) * 100
 
     with top_cols[0].container(border=True):
         m1, m2, m3 = st.columns(3)
@@ -299,20 +300,18 @@ if not outcome_summary.empty:
             m1.metric("Avg Win Prob", f"{avg_win_prob:.1f}%",
                       delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
                       delta_color="normal")
+            avg_closing_price = outcome_summary["closing_price"].mean()
+            m2.metric("Avg Price", int(round(avg_closing_price)),
+                      delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
+                      delta_color="normal")
+            m3.metric("Avg Margin", f"{avg_margin:.1f}%")
         else:
             avg_closing_line = outcome_summary["closing_line"].mean()
             avg_line_movement = outcome_summary["total_line_movement"].mean()
             m1.metric("Avg Line", f"{avg_closing_line:+.1f}",
                       delta=f"{avg_line_movement:+.1f}" if round(avg_line_movement, 2) != 0 else None,
                       delta_color="normal")
-        m2.metric("Avg Price", int(round(avg_closing_price)),
-                  delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
-                  delta_color="normal")
-        if market_type == "h2h":
-            vig_by_book = summary.groupby("sportsbook")["closing_implied_prob_pct"].sum()
-            avg_margin = (vig_by_book.mean() - 1.0) * 100
-            m3.metric("Avg Margin", f"{avg_margin:.1f}%")
-        else:
+            m2.metric("Avg Margin", f"{avg_margin:.1f}%")
             books_moved = (outcome_summary["total_line_movement"] != 0).sum()
             m3.metric("Books Moved", f"{books_moved} of {n_books}")
         st.caption(f"Avg closing odds across {n_books} selected operator(s)")
