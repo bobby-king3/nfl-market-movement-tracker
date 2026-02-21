@@ -12,7 +12,7 @@ I pulled historical odds from [The Odds API](https://the-odds-api.com/) 4 times 
 
 ## Dataset
 
-1.1M+ rows covering the full 2025-2026 NFL season, with spreads and totals from 30+ operators including DraftKings, FanDuel, BetMGM, BetRivers, Pinnacle, Hard Rock Bet, and others. 636 total snapshots were captured throughout the season.
+1.8M+ rows covering the full 2025-2026 NFL season with spreads, totals, and head to head market data from 30+ operators including DraftKings, FanDuel, BetMGM, BetRivers, Pinnacle, Hard Rock Bet, and others. 636 total snapshots were captured throughout the season.
 
 ## dbt Models
 
