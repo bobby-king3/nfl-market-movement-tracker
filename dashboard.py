@@ -15,7 +15,7 @@ DB_URL = "https://github.com/bobby-king3/nfl-market-movement-tracker/releases/do
 
 if not os.path.exists(DB_PATH):
     os.makedirs("data", exist_ok=True)
-    with st.spinner("Downloading database..."):
+    with st.spinner("Downloading database"):
         urllib.request.urlretrieve(DB_URL, DB_PATH)
 
 st.set_page_config(

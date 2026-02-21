@@ -71,7 +71,7 @@ def odds_extract():
             skipped += 1
             continue
 
-        print(f"[{i+1}/{len(all_timestamps)}] Fetching {timestamp}...")
+        print(f"[{i+1}/{len(all_timestamps)}] Fetching {timestamp}")
 
         try:
             data = get_historical_odds(timestamp)
