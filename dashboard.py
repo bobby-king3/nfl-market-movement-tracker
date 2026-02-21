@@ -1,5 +1,6 @@
 import os
 import urllib.request
+from datetime import timedelta
 import streamlit as st
 import duckdb
 import pandas as pd
@@ -11,11 +12,11 @@ import plotly.graph_objects as go
 # Streamlit: https://demo-stockpeers.streamlit.app/?ref=streamlit-io-gallery-favorites&stocks=AAPL%2CMSFT%2CGOOGL%2CNVDA%2CAMZN%2CTSLA%2CMETA
 
 DB_PATH = "data/nfl_odds.duckdb"
-DB_URL = "https://github.com/bobby-king3/nfl-market-movement-tracker/releases/download/v1.0.0/nfl_odds.duckdb"
+DB_URL = "https://github.com/bobby-king3/nfl-market-movement-tracker/releases/download/v1.1.0/nfl_odds.duckdb"
 
 if not os.path.exists(DB_PATH):
     os.makedirs("data", exist_ok=True)
-    with st.spinner("Downloading database..."):
+    with st.spinner("Downloading database"):
         urllib.request.urlretrieve(DB_URL, DB_PATH)
 
 st.set_page_config(
@@ -27,10 +28,9 @@ st.set_page_config(
 """
 # NFL Market Movement Tracker
 
-Track how market lines move across operators leading up to kickoff.
 """
 
-""  # Add some space.
+""
 
 OPERATOR_DISPLAY = {
     "ballybet": "Bally Bet",
@@ -60,7 +60,7 @@ OPERATOR_COLORS = {
     "fliff": "#FF69B4",
 }
 
-DEFAULT_OPERATORS = ["pinnacle", "draftkings", "fanduel"]
+DEFAULT_OPERATORS = ["pinnacle", "draftkings", "fanduel", "hardrockbet", "betrivers"]
 
 
 WEEK_LABELS = {
@@ -173,7 +173,12 @@ with filter_cell:
         format_func=lambda x: OPERATOR_DISPLAY.get(x, x),
     )
 
-    market_type = st.pills("Market", ["spreads", "totals"], default="spreads")
+    market_type = st.pills(
+        "Market",
+        ["h2h", "spreads", "totals"],
+        default="h2h",
+        format_func=lambda x: {"h2h": "Head to Head", "spreads": "Spread", "totals": "Total"}[x],
+    )
 
 if not selected_operators:
     filter_cell.info("Select at least one operator.", icon=":material/info:")
@@ -191,6 +196,9 @@ outcomes = movements["outcome"].unique().tolist()
 if market_type == "spreads":
     home_outcomes = [o for o in outcomes if movements[movements["outcome"] == o]["line"].iloc[0] < 0]
     selected_outcome = home_outcomes[0] if home_outcomes else outcomes[0]
+elif market_type == "h2h":
+    latest_probs = movements.sort_values("captured_at").groupby("outcome")["implied_prob"].last()
+    selected_outcome = latest_probs.idxmax() if not latest_probs.empty else outcomes[0]
 else:
     selected_outcome = "Over" if "Over" in outcomes else outcomes[0]
 
@@ -207,6 +215,9 @@ if other_outcome:
     )
     filtered = filtered.merge(other_filtered, on=["captured_at", "sportsbook"], how="left")
 
+selected_game_info = next(g for g in games_with_weeks if g[0] == selected_event_id)
+game_start_time = selected_game_info[3]
+
 chart_cell = top_cols[1].container(border=True)
 
 hover_data = {"price": True}
@@ -218,14 +229,21 @@ with chart_cell:
     chart_data["operator"] = chart_data["sportsbook"].map(OPERATOR_DISPLAY)
     display_color_map = {OPERATOR_DISPLAY[k]: v for k, v in OPERATOR_COLORS.items() if k in OPERATOR_COLORS}
 
+    if market_type == "h2h":
+        y_col = "price"
+        y_label = "Head to Head Price"
+    else:
+        y_col = "line"
+        y_label = "Line"
+
     fig_line = px.line(
         chart_data,
         x="captured_at",
-        y="line",
+        y=y_col,
         color="operator",
         labels={
             "captured_at": "Date",
-            "line": "Line",
+            y_col: y_label,
             "operator": "Operator",
             "price": f"{selected_outcome} Price",
             "other_price": f"{other_outcome[0]} Price" if other_outcome else "Price",
@@ -234,41 +252,70 @@ with chart_cell:
         hover_data=hover_data,
         color_discrete_map=display_color_map,
     )
-    line_min = filtered["line"].min() - 1
-    line_max = filtered["line"].max() + 1
-    fig_line.update_yaxes(range=[line_min, line_max], dtick=0.5)
+    if market_type == "h2h":
+        price_min = filtered["price"].min() - 5
+        price_max = filtered["price"].max() + 5
+        fig_line.update_yaxes(range=[price_min, price_max])
+    else:
+        line_min = filtered["line"].min() - 1
+        line_max = filtered["line"].max() + 1
+        fig_line.update_yaxes(range=[line_min, line_max], dtick=0.5)
     fig_line.update_traces(line=dict(width=2.5))
     fig_line.update_layout(
         hovermode="x unified",
-        height=450,
+        height=615,
         margin=dict(l=20, r=20, t=30, b=20),
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+        xaxis=dict(
+            range=[game_start_time - timedelta(days=14), game_start_time],
+            rangeselector=dict(
+                buttons=[
+                    dict(count=7, label="1W", step="day", stepmode="backward"),
+                    dict(count=14, label="2W", step="day", stepmode="backward"),
+                    dict(step="all", label="All"),
+                ],
+            ),
+        ),
     )
 
     if market_type == "spreads":
         chart_label = f"Spread — {selected_outcome}"
+    elif market_type == "h2h":
+        chart_label = f"Head to Head — {selected_outcome}"
     else:
         chart_label = f"Total — {selected_outcome}"
     st.caption(chart_label)
     st.plotly_chart(fig_line, use_container_width=True)
 
-# Use Pinnacle as consensus data point
 if not outcome_summary.empty:
-    pinnacle_row = outcome_summary[outcome_summary["sportsbook"] == "pinnacle"]
-    metric_row = pinnacle_row.iloc[0] if not pinnacle_row.empty else outcome_summary.iloc[0]
-
-    line_movement = metric_row["total_line_movement"]
-    prob_change = metric_row["implied_prob_pct_change"] * 100
+    avg_closing_price = outcome_summary["closing_price"].mean()
+    avg_prob_change = outcome_summary["implied_prob_pct_change"].mean() * 100
+    n_books = len(outcome_summary)
 
     with top_cols[0].container(border=True):
-        m1, m2 = st.columns(2)
-        m1.metric("Line", metric_row["closing_line"],
-                  delta=f"{line_movement:+.1f}" if line_movement != 0 else None,
+        m1, m2, m3 = st.columns(3)
+        if market_type == "h2h":
+            avg_win_prob = outcome_summary["closing_implied_prob_pct"].mean() * 100
+            m1.metric("Avg Win Prob", f"{avg_win_prob:.1f}%",
+                      delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
+                      delta_color="normal")
+        else:
+            avg_closing_line = outcome_summary["closing_line"].mean()
+            avg_line_movement = outcome_summary["total_line_movement"].mean()
+            m1.metric("Avg Line", f"{avg_closing_line:+.1f}",
+                      delta=f"{avg_line_movement:+.1f}" if round(avg_line_movement, 2) != 0 else None,
+                      delta_color="normal")
+        m2.metric("Avg Price", int(round(avg_closing_price)),
+                  delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
                   delta_color="normal")
-        m2.metric("Price", int(metric_row["closing_price"]),
-                  delta=f"{prob_change:+.1f}%" if round(prob_change, 2) != 0 else None,
-                  delta_color="normal")
-        st.caption("Pinnacle closing odds")
+        if market_type == "h2h":
+            vig_by_book = summary.groupby("sportsbook")["closing_implied_prob_pct"].sum()
+            avg_margin = (vig_by_book.mean() - 1.0) * 100
+            m3.metric("Avg Margin", f"{avg_margin:.1f}%")
+        else:
+            books_moved = (outcome_summary["total_line_movement"] != 0).sum()
+            m3.metric("Books Moved", f"{books_moved} of {n_books}")
+        st.caption(f"Avg closing odds across {n_books} selected operator(s)")
 
 if not summary.empty:
     """
@@ -293,17 +340,6 @@ if not summary.empty:
 
         fig.add_trace(go.Bar(
             y=display_names,
-            x=[side_other.loc[b, "closing_pct"] for b in books],
-            name=other_name,
-            orientation="h",
-            marker_color="#5B8FC9",
-            text=[f"{side_other.loc[b, 'closing_pct']:.1f}%" for b in books],
-            textposition="inside",
-            hovertemplate="%{y}: %{x:.1f}%<extra>" + other_name + "</extra>",
-        ))
-
-        fig.add_trace(go.Bar(
-            y=display_names,
             x=[side_selected.loc[b, "closing_pct"] for b in books],
             name=selected_outcome,
             orientation="h",
@@ -311,6 +347,17 @@ if not summary.empty:
             text=[f"{side_selected.loc[b, 'closing_pct']:.1f}%" for b in books],
             textposition="inside",
             hovertemplate="%{y}: %{x:.1f}%<extra>" + selected_outcome + "</extra>",
+        ))
+
+        fig.add_trace(go.Bar(
+            y=display_names,
+            x=[side_other.loc[b, "closing_pct"] for b in books],
+            name=other_name,
+            orientation="h",
+            marker_color="#5B8FC9",
+            text=[f"{side_other.loc[b, 'closing_pct']:.1f}%" for b in books],
+            textposition="inside",
+            hovertemplate="%{y}: %{x:.1f}%<extra>" + other_name + "</extra>",
         ))
 
         # Add margin annotations at end of each bar
@@ -348,7 +395,7 @@ if not summary.empty:
 ""
 ""
 
-if not outcome_summary.empty:
+if not outcome_summary.empty and market_type != "h2h":
     """
     ## Opening vs Closing Line
     """
@@ -536,13 +583,23 @@ if not filtered.empty:
             range=[prob_min - y_padding, prob_max + y_padding],
             ticksuffix="%",
         ),
+        xaxis=dict(
+            range=[game_start_time - timedelta(days=14), game_start_time],
+            rangeselector=dict(
+                buttons=[
+                    dict(count=7, label="1W", step="day", stepmode="backward"),
+                    dict(count=14, label="2W", step="day", stepmode="backward"),
+                    dict(step="all", label="All"),
+                ],
+            ),
+        ),
         xaxis_title="",
         hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
     )
 
     st.plotly_chart(fig_prob, use_container_width=True)
-    st.caption(f"Market confidence for {selected_outcome} over time, derived from odds pricing.")
+    st.caption(f"Market confidence for {selected_outcome} over time, calculated based on odds pricing.")
 
 ""
 ""
@@ -551,16 +608,34 @@ if not filtered.empty:
 ## Game Summary
 """
 
-summary_display = summary[["sportsbook", "outcome", "opening_line", "closing_line",
-                            "total_line_movement", "opening_price", "closing_price"]].copy()
-summary_display["sportsbook"] = summary_display["sportsbook"].map(OPERATOR_DISPLAY)
-summary_display = summary_display.rename(columns={
-    "sportsbook": "Operator",
-    "outcome": "Outcome",
-    "opening_line": "Opening Line",
-    "closing_line": "Closing Line",
-    "total_line_movement": "Line Movement",
-    "opening_price": "Opening Price",
-    "closing_price": "Closing Price",
-})
+if market_type == "h2h":
+    summary_display = summary[["sportsbook", "outcome", "opening_price", "closing_price",
+                                "opening_implied_prob_pct", "closing_implied_prob_pct",
+                                "implied_prob_pct_change"]].copy()
+    summary_display["opening_implied_prob_pct"] = (summary_display["opening_implied_prob_pct"] * 100).round(1)
+    summary_display["closing_implied_prob_pct"] = (summary_display["closing_implied_prob_pct"] * 100).round(1)
+    summary_display["implied_prob_pct_change"] = (summary_display["implied_prob_pct_change"] * 100).round(1)
+    summary_display["sportsbook"] = summary_display["sportsbook"].map(OPERATOR_DISPLAY)
+    summary_display = summary_display.rename(columns={
+        "sportsbook": "Operator",
+        "outcome": "Outcome",
+        "opening_price": "Opening Price",
+        "closing_price": "Closing Price",
+        "opening_implied_prob_pct": "Opening Win %",
+        "closing_implied_prob_pct": "Closing Win %",
+        "implied_prob_pct_change": "Win % Change",
+    })
+else:
+    summary_display = summary[["sportsbook", "outcome", "opening_line", "closing_line",
+                                "total_line_movement", "opening_price", "closing_price"]].copy()
+    summary_display["sportsbook"] = summary_display["sportsbook"].map(OPERATOR_DISPLAY)
+    summary_display = summary_display.rename(columns={
+        "sportsbook": "Operator",
+        "outcome": "Outcome",
+        "opening_line": "Opening Line",
+        "closing_line": "Closing Line",
+        "total_line_movement": "Line Movement",
+        "opening_price": "Opening Price",
+        "closing_price": "Closing Price",
+    })
 st.dataframe(summary_display, use_container_width=True, hide_index=True)

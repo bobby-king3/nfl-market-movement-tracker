@@ -11,7 +11,7 @@ models:
       - name: market_type
         tests:
           - accepted_values:
-              values: ['spreads', 'totals']
+              values: ['spreads', 'totals', 'h2h']
       - name: captured_at
         tests:
           - not_null
