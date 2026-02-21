@@ -8,7 +8,7 @@ odds_api_base_url = "https://api.the-odds-api.com/v4"
 
 sport_key = "americanfootball_nfl"
 
-markets = ["spreads", "totals"]
+markets = ["spreads", "totals", "h2h"]
 
 regions = ["us", "us2", "eu"]
 
