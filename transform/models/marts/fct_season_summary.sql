@@ -25,3 +25,4 @@ select
     first_captured_at,
     datediff('day', first_captured_at, game_start_time) as days_of_data
 from pinnacle
+where market_type != 'h2h'
