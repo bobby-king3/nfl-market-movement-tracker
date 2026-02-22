@@ -27,8 +27,9 @@ st.set_page_config(
 
 """
 # NFL Market Movement Tracker
-
 """
+
+st.caption("2025-2026 Season")
 
 ""
 
