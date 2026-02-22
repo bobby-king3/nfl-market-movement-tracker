@@ -27,8 +27,9 @@ st.set_page_config(
 
 """
 # NFL Market Movement Tracker
-
 """
+
+st.caption("2025-2026 Season")
 
 ""
 
@@ -117,8 +118,6 @@ def get_game_summary(event_id, sportsbooks, market_type):
     conn.close()
     return df
 
-top_cols = st.columns([1, 3])
-
 games = get_games()
 
 games_with_weeks = []
@@ -132,9 +131,7 @@ all_teams = sorted(set(
     team for g in games_with_weeks for team in (g[1], g[2])
 ))
 
-filter_cell = top_cols[0].container(border=True)
-
-with filter_cell:
+with st.sidebar:
     browse_mode = st.pills("Browse by", ["Week", "Team"], default="Week")
 
     if browse_mode == "Week":
@@ -181,14 +178,14 @@ with filter_cell:
     )
 
 if not selected_operators:
-    filter_cell.info("Select at least one operator.", icon=":material/info:")
+    st.info("Select at least one operator.", icon=":material/info:")
     st.stop()
 
 movements = get_line_movements(selected_event_id, selected_operators, market_type)
 summary = get_game_summary(selected_event_id, selected_operators, market_type)
 
 if movements.empty:
-    filter_cell.info("No data for this selection.", icon=":material/info:")
+    st.info("No data for this selection.", icon=":material/info:")
     st.stop()
 
 outcomes = movements["outcome"].unique().tolist()
@@ -202,7 +199,7 @@ elif market_type == "h2h":
 else:
     selected_outcome = "Over" if "Over" in outcomes else outcomes[0]
 
-with filter_cell:
+with st.sidebar:
     selected_outcome = st.pills("Outcome", outcomes, default=selected_outcome)
 
 filtered = movements[movements["outcome"] == selected_outcome]
@@ -218,103 +215,102 @@ if other_outcome:
 selected_game_info = next(g for g in games_with_weeks if g[0] == selected_event_id)
 game_start_time = selected_game_info[3]
 
-chart_cell = top_cols[1].container(border=True)
-
-hover_data = {"price": True}
-if "other_price" in filtered.columns:
-    hover_data["other_price"] = True
-
-with chart_cell:
-    chart_data = filtered.copy()
-    chart_data["operator"] = chart_data["sportsbook"].map(OPERATOR_DISPLAY)
-    display_color_map = {OPERATOR_DISPLAY[k]: v for k, v in OPERATOR_COLORS.items() if k in OPERATOR_COLORS}
-
-    if market_type == "h2h":
-        y_col = "price"
-        y_label = "Head to Head Price"
-    else:
-        y_col = "line"
-        y_label = "Line"
-
-    fig_line = px.line(
-        chart_data,
-        x="captured_at",
-        y=y_col,
-        color="operator",
-        labels={
-            "captured_at": "Date",
-            y_col: y_label,
-            "operator": "Operator",
-            "price": f"{selected_outcome} Price",
-            "other_price": f"{other_outcome[0]} Price" if other_outcome else "Price",
-        },
-        line_shape="hv",
-        hover_data=hover_data,
-        color_discrete_map=display_color_map,
-    )
-    if market_type == "h2h":
-        price_min = filtered["price"].min() - 5
-        price_max = filtered["price"].max() + 5
-        fig_line.update_yaxes(range=[price_min, price_max])
-    else:
-        line_min = filtered["line"].min() - 1
-        line_max = filtered["line"].max() + 1
-        fig_line.update_yaxes(range=[line_min, line_max], dtick=0.5)
-    fig_line.update_traces(line=dict(width=2.5))
-    fig_line.update_layout(
-        hovermode="x unified",
-        height=615,
-        margin=dict(l=20, r=20, t=30, b=20),
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        xaxis=dict(
-            range=[game_start_time - timedelta(days=14), game_start_time],
-            rangeselector=dict(
-                buttons=[
-                    dict(count=7, label="1W", step="day", stepmode="backward"),
-                    dict(count=14, label="2W", step="day", stepmode="backward"),
-                    dict(step="all", label="All"),
-                ],
-            ),
-        ),
-    )
-
-    if market_type == "spreads":
-        chart_label = f"Spread — {selected_outcome}"
-    elif market_type == "h2h":
-        chart_label = f"Head to Head — {selected_outcome}"
-    else:
-        chart_label = f"Total — {selected_outcome}"
-    st.caption(chart_label)
-    st.plotly_chart(fig_line, use_container_width=True)
-
 if not outcome_summary.empty:
     avg_prob_change = outcome_summary["implied_prob_pct_change"].mean() * 100
     n_books = len(outcome_summary)
     vig_by_book = summary.groupby("sportsbook")["closing_implied_prob_pct"].sum()
     avg_margin = (vig_by_book.mean() - 1.0) * 100
 
-    with top_cols[0].container(border=True):
-        m1, m2, m3 = st.columns(3)
-        if market_type == "h2h":
-            avg_win_prob = outcome_summary["closing_implied_prob_pct"].mean() * 100
-            m1.metric("Avg Win Prob", f"{avg_win_prob:.1f}%",
-                      delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
-                      delta_color="normal")
-            avg_closing_price = outcome_summary["closing_price"].mean()
-            m2.metric("Avg Price", int(round(avg_closing_price)),
-                      delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
-                      delta_color="normal")
-            m3.metric("Avg Margin", f"{avg_margin:.1f}%")
-        else:
-            avg_closing_line = outcome_summary["closing_line"].mean()
-            avg_line_movement = outcome_summary["total_line_movement"].mean()
-            m1.metric("Avg Line", f"{avg_closing_line:+.1f}",
-                      delta=f"{avg_line_movement:+.1f}" if round(avg_line_movement, 2) != 0 else None,
-                      delta_color="normal")
-            m2.metric("Avg Margin", f"{avg_margin:.1f}%")
-            books_moved = (outcome_summary["total_line_movement"] != 0).sum()
-            m3.metric("Books Moved", f"{books_moved} of {n_books}")
-        st.caption(f"Avg closing odds across {n_books} selected operator(s)")
+    metric_col, _ = st.columns([1, 1])
+    with metric_col:
+        with st.container(border=True):
+            m1, m2, m3 = st.columns(3)
+            if market_type == "h2h":
+                avg_win_prob = outcome_summary["closing_implied_prob_pct"].mean() * 100
+                m1.metric("Avg Win Prob", f"{avg_win_prob:.1f}%",
+                          delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
+                          delta_color="normal")
+                avg_closing_price = outcome_summary["closing_price"].mean()
+                m2.metric("Avg Price", int(round(avg_closing_price)),
+                          delta=f"{avg_prob_change:+.1f}%" if round(avg_prob_change, 2) != 0 else None,
+                          delta_color="normal")
+                m3.metric("Avg Margin", f"{avg_margin:.1f}%")
+            else:
+                avg_closing_line = outcome_summary["closing_line"].mean()
+                avg_line_movement = outcome_summary["total_line_movement"].mean()
+                m1.metric("Avg Line", f"{avg_closing_line:+.1f}",
+                          delta=f"{avg_line_movement:+.1f}" if round(avg_line_movement, 2) != 0 else None,
+                          delta_color="normal")
+                m2.metric("Avg Margin", f"{avg_margin:.1f}%")
+                books_moved = (outcome_summary["total_line_movement"] != 0).sum()
+                m3.metric("Operators Moved", f"{books_moved} of {n_books}")
+            st.caption(f"Avg closing odds across {n_books} selected operator(s)")
+
+hover_data = {"price": True}
+if "other_price" in filtered.columns:
+    hover_data["other_price"] = True
+
+chart_data = filtered.copy()
+chart_data["operator"] = chart_data["sportsbook"].map(OPERATOR_DISPLAY)
+display_color_map = {OPERATOR_DISPLAY[k]: v for k, v in OPERATOR_COLORS.items() if k in OPERATOR_COLORS}
+
+if market_type == "h2h":
+    y_col = "price"
+    y_label = "Head to Head Price"
+else:
+    y_col = "line"
+    y_label = "Line"
+
+fig_line = px.line(
+    chart_data,
+    x="captured_at",
+    y=y_col,
+    color="operator",
+    labels={
+        "captured_at": "Date",
+        y_col: y_label,
+        "operator": "Operator",
+        "price": f"{selected_outcome} Price",
+        "other_price": f"{other_outcome[0]} Price" if other_outcome else "Price",
+    },
+    line_shape="hv",
+    hover_data=hover_data,
+    color_discrete_map=display_color_map,
+)
+if market_type == "h2h":
+    price_min = filtered["price"].min() - 5
+    price_max = filtered["price"].max() + 5
+    fig_line.update_yaxes(range=[price_min, price_max])
+else:
+    line_min = filtered["line"].min() - 1
+    line_max = filtered["line"].max() + 1
+    fig_line.update_yaxes(range=[line_min, line_max], dtick=0.5)
+fig_line.update_traces(line=dict(width=2.5))
+fig_line.update_layout(
+    hovermode="x unified",
+    height=450,
+    margin=dict(l=20, r=20, t=30, b=20),
+    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    xaxis=dict(
+        range=[game_start_time - timedelta(days=7), game_start_time],
+        rangeselector=dict(
+            buttons=[
+                dict(count=7, label="1W", step="day", stepmode="backward"),
+                dict(count=14, label="2W", step="day", stepmode="backward"),
+                dict(step="all", label="All"),
+            ],
+        ),
+    ),
+)
+
+if market_type == "spreads":
+    chart_label = f"Spread — {selected_outcome}"
+elif market_type == "h2h":
+    chart_label = f"Head to Head — {selected_outcome}"
+else:
+    chart_label = f"Total — {selected_outcome}"
+st.caption(chart_label)
+st.plotly_chart(fig_line, use_container_width=True)
 
 if not summary.empty:
     """
@@ -396,7 +392,7 @@ if not summary.empty:
 
 if not outcome_summary.empty and market_type != "h2h":
     """
-    ## Opening vs Closing Line
+    ## Opening vs Closing Movement
     """
 
     dumbbell_data = outcome_summary.copy()
@@ -583,7 +579,7 @@ if not filtered.empty:
             ticksuffix="%",
         ),
         xaxis=dict(
-            range=[game_start_time - timedelta(days=14), game_start_time],
+            range=[game_start_time - timedelta(days=7), game_start_time],
             rangeselector=dict(
                 buttons=[
                     dict(count=7, label="1W", step="day", stepmode="backward"),

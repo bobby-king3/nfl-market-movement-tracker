@@ -25,11 +25,11 @@ I pulled historical odds from [The Odds API](https://the-odds-api.com/) 4 times 
 
 **Tests**
 - `not_null` and `accepted_values` on staging columns
-- Custom tests validating that every spread has two sides and lines are properly inverse (+3 / -3)
+- Custom tests validating that every spread and total has two sides, lines are properly inverse (+3 / -3), all data is pre-match, and implied probabilities are valid
 
 ## dbt Lineage
 
-![dbt lineage graph](image.png)
+![dbt lineage graph](dbt_lineage.png)
 
 ## Dashboard
 
