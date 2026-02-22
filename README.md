@@ -29,7 +29,7 @@ I pulled historical odds from [The Odds API](https://the-odds-api.com/) 4 times 
 
 ## dbt Lineage
 
-![dbt lineage graph](image.png)
+![dbt lineage graph](dbt_lineage.png)
 
 ## Dashboard
 
