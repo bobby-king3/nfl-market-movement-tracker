@@ -117,7 +117,7 @@ def get_game_summary(event_id, sportsbooks, market_type):
     conn.close()
     return df
 
-top_cols = st.columns([1, 3])
+top_cols = st.columns([1.5, 2.5])
 
 games = get_games()
 
@@ -132,7 +132,7 @@ all_teams = sorted(set(
     team for g in games_with_weeks for team in (g[1], g[2])
 ))
 
-filter_cell = top_cols[0].container(border=True)
+filter_cell = top_cols[0].container(border=True, height=615)
 
 with filter_cell:
     browse_mode = st.pills("Browse by", ["Week", "Team"], default="Week")
@@ -218,7 +218,7 @@ if other_outcome:
 selected_game_info = next(g for g in games_with_weeks if g[0] == selected_event_id)
 game_start_time = selected_game_info[3]
 
-chart_cell = top_cols[1].container(border=True)
+chart_cell = top_cols[1].container(border=True, height=615)
 
 hover_data = {"price": True}
 if "other_price" in filtered.columns:
