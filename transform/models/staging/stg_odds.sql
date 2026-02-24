@@ -22,3 +22,4 @@ select
 from raw_odds
 where captured_at < commence_time
 and market_key != 'h2h_lay' -- lay betting market from EU exchanges, not including in analysis/dashboard
+and event_id != '49e177e39ff23cd0596bae127b04df43' -- Bad data received from API for Commanders @ Rams Week 5. This is an error and actually played Chargers in Week 5.
