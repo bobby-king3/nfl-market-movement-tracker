@@ -11,7 +11,7 @@ raw_data_dir = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
 season_start = datetime(2025, 9, 4)
 season_end = datetime(2026, 2, 9)
 
-# 4X extractions per day at 8am, 12pm, 4pm, 8pm CT = 14:00, 18:00, 22:00, 02:00 UTC
+# 4X snapshots per day at 8am, 12pm, 4pm, 8pm CT = 14:00, 18:00, 22:00, 02:00 UTC
 capture_hours_utc = [2, 14, 18, 22]
 
 # Historical odds endpoint documentation can be found here: https://the-odds-api.com/liveapi/guides/v4/#get-historical-odds
