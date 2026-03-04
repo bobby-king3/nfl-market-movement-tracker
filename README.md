@@ -4,7 +4,7 @@ This project tracks how NFL market lines move across operators leading up to kic
 
 ## Pipeline
 
-![Pipeline Diagram](project_diagram.png)
+![Pipeline Diagram](pipeline_diagram.png)
 
 ## Background
 
