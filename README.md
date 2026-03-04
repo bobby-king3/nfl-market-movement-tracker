@@ -2,6 +2,10 @@
 
 This project tracks how NFL market lines move across operators leading up to kickoff throughout the 2025-2026 season. Built as an ELT pipeline using Python, DuckDB, and dbt, with a Streamlit dashboard for visualization.
 
+## Pipeline
+
+![Pipeline Diagram](project_diagram.png)
+
 ## Background
 
 ```
