@@ -29,7 +29,7 @@ st.set_page_config(
 # NFL Market Tracker
 """
 
-st.caption("2025-2026 Season")
+st.subheader("2025-2026 Season")
 
 ""
 
