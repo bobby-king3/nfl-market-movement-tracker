@@ -20,13 +20,13 @@ if not os.path.exists(DB_PATH):
         urllib.request.urlretrieve(DB_URL, DB_PATH)
 
 st.set_page_config(
-    page_title="NFL Market Movement Tracker",
+    page_title="NFL Market Tracker",
     page_icon=":football:",
     layout="wide",
 )
 
 """
-# NFL Market Movement Tracker
+# NFL Market Tracker
 """
 
 st.caption("2025-2026 Season")
