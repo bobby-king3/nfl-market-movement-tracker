@@ -93,7 +93,7 @@ cd ..
 streamlit run dashboard.py
 ```
 
-## Planned Future Work
+## Future Work
 - For the 2026-2027 season and beyond, add orchestration to automate live data ingestion rather than relying on a full historical data pull. 
 - The historical odds endpoint costs significantly more credits per request, so using the standard odds endpoint will allow for more frequent data snapshots.
 
